@@ -1,0 +1,10 @@
+.venv/
+.env
+output.log
+memory.json
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.vscode/

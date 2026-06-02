@@ -1,0 +1,13 @@
+Flask>=3.0.0
+Flask-Cors>=4.0.0
+SpeechRecognition>=3.10.0
+PyAudio>=0.2.14
+soundfile>=0.12.0
+numpy>=1.24.0
+pydub>=0.25.0
+python-dotenv>=1.0.0
+requests>=2.31.0
+PyAutoGUI>=0.9.54
+pyperclip>=1.8.2
+pywin32>=306; sys_platform == 'win32'
+kokoro-onnx>=0.3.0

@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Echoo</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=Jost:wght@200;300;400&display=swap');
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f5f0ea;--bg2:#ede7dc;
+  --glass:rgba(255,252,248,0.72);--edge:rgba(180,160,130,0.25);
+  --shine:rgba(255,255,255,0.90);--blur:saturate(160%) blur(24px);
+  --tx:#2a2018;--tx-mid:rgba(42,32,24,0.50);--tx-low:rgba(42,32,24,0.25);
+  --acc:#c4955a;--acc2:#a07840;--grn:#5a9e7a;--pnk:#c4607a;
+  --shadow:rgba(100,70,30,0.12);
+}
+html,body{width:100%;height:100%;overflow:hidden;font-family:'Jost',sans-serif;background:var(--bg);color:var(--tx);}
+body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:radial-gradient(ellipse at 20% 50%,rgba(210,180,140,0.15),transparent 60%),
+             radial-gradient(ellipse at 80% 20%,rgba(255,220,170,0.12),transparent 55%),
+             radial-gradient(ellipse at 60% 80%,rgba(200,160,120,0.10),transparent 50%);}
+#three-canvas{position:fixed;inset:0;width:100%;height:100%;z-index:1;}
+header{position:fixed;top:16px;left:50%;transform:translateX(-50%);z-index:20;
+  display:flex;align-items:center;gap:14px;padding:9px 24px;border-radius:999px;
+  background:var(--glass);border:1px solid var(--edge);
+  backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);
+  box-shadow:inset 0 1px 0 var(--shine),0 4px 24px var(--shadow),0 1px 0 rgba(255,255,255,0.6);}
+#logo{font-family:'Cormorant Garamond',serif;font-style:italic;font-weight:300;font-size:1.15rem;letter-spacing:.06em;color:var(--tx);}
+.hd{width:1px;height:13px;background:var(--edge);}
+#status{display:flex;align-items:center;gap:7px;font-size:.58rem;font-weight:300;letter-spacing:.18em;text-transform:uppercase;color:var(--tx-mid);}
+#sdot{width:5px;height:5px;border-radius:50%;background:var(--tx-low);transition:background .4s,box-shadow .4s;}
+#sdot.on  {background:var(--grn);box-shadow:0 0 0 3px rgba(90,158,122,0.2);animation:dp 1.8s ease-in-out infinite;}
+#sdot.talk{background:var(--pnk);box-shadow:0 0 0 3px rgba(196,96,122,0.2);animation:dp .5s ease-in-out infinite;}
+@keyframes dp{0%,100%{opacity:1}50%{opacity:.25}}
+#cam-pip{position:fixed;top:16px;right:18px;z-index:20;display:flex;flex-direction:column;align-items:flex-end;gap:6px;}
+#cam-lbl{font-size:.5rem;letter-spacing:.16em;text-transform:uppercase;color:var(--tx-mid);}
+#cam-feed{width:120px;border-radius:12px;border:1px solid var(--edge);
+  box-shadow:inset 0 1px 0 var(--shine),0 4px 16px var(--shadow);
+  object-fit:cover;aspect-ratio:4/3;transform:scaleX(-1);background:var(--bg2);}
+#bar{position:fixed;bottom:90px;left:50%;transform:translateX(-50%) translateY(calc(100% + 20px));
+  z-index:20;width:min(600px,86vw);padding:14px 20px;border-radius:20px;
+  background:var(--glass);border:1px solid var(--edge);
+  backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);
+  box-shadow:inset 0 1px 0 var(--shine),0 8px 32px var(--shadow);
+  display:flex;align-items:center;gap:14px;
+  transition:transform .45s cubic-bezier(.22,1,.36,1),opacity .45s;opacity:0;}
+#bar.show{transform:translateX(-50%) translateY(0);opacity:1;}
+#chat-box {
+  position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+  z-index: 30; width: min(460px, 90vw); display: flex; align-items: center;
+  gap: 8px; padding: 8px 12px; border-radius: 20px;
+  background: var(--glass); border: 1px solid var(--edge);
+  backdrop-filter: var(--blur); -webkit-backdrop-filter: var(--blur);
+  box-shadow: 0 8px 32px var(--shadow), inset 0 1px 0 var(--shine);
+}
+#user-input {
+  flex: 1; background: transparent; border: none; padding: 8px 4px;
+  color: var(--tx); font-family: 'Jost', sans-serif; font-size: 0.95rem; outline: none;
+}
+#user-input::placeholder { color: var(--tx-low); }
+#send-btn {
+  background: var(--acc); color: white; border: none; width: 36px; height: 36px;
+  border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: 0.2s;
+}
+#send-btn:hover { background: var(--acc2); transform: scale(1.05); }
+#send-btn svg { width: 18px; height: 18px; fill: currentColor; }
+#wv{display:flex;align-items:center;gap:2px;height:16px;flex-shrink:0;}
+.wb{width:2px;border-radius:99px;background:linear-gradient(to top,var(--acc),var(--acc2));animation:wi 1.8s ease-in-out infinite;}
+.wb:nth-child(1){height:3px;animation-delay:0s}.wb:nth-child(2){height:6px;animation-delay:.09s}
+.wb:nth-child(3){height:10px;animation-delay:.18s}.wb:nth-child(4){height:16px;animation-delay:.27s}
+.wb:nth-child(5){height:10px;animation-delay:.18s}.wb:nth-child(6){height:6px;animation-delay:.09s}
+.wb:nth-child(7){height:3px;animation-delay:0s}
+@keyframes wi{0%,100%{transform:scaleY(.15)}50%{transform:scaleY(1)}}
+#bar.talking .wb{animation:ws .42s ease-in-out infinite;}
+#bar.talking .wb:nth-child(1){animation-delay:0s}#bar.talking .wb:nth-child(2){animation-delay:.06s}
+#bar.talking .wb:nth-child(3){animation-delay:.12s}#bar.talking .wb:nth-child(4){animation-delay:.18s}
+#bar.talking .wb:nth-child(5){animation-delay:.12s}#bar.talking .wb:nth-child(6){animation-delay:.06s}
+#bar.talking .wb:nth-child(7){animation-delay:0s}
+@keyframes ws{0%,100%{transform:scaleY(1)}50%{transform:scaleY(.08)}}
+#sub-inner{flex:1;min-width:0;}
+#sub-who{font-size:.48rem;font-weight:300;letter-spacing:.22em;text-transform:uppercase;color:var(--acc);margin-bottom:4px;}
+#sub-txt{font-family:'Cormorant Garamond',serif;font-style:italic;font-weight:300;font-size:1.05rem;line-height:1.55;color:var(--tx);}
+#ld{position:fixed;inset:0;z-index:100;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;background:var(--bg);transition:opacity .8s ease;}
+#ld.fade{opacity:0;pointer-events:none;}
+#ld-name{font-family:'Cormorant Garamond',serif;font-style:italic;font-weight:300;font-size:2.6rem;letter-spacing:.06em;color:var(--tx);}
+#ld-msg{font-size:.56rem;font-weight:300;letter-spacing:.2em;text-transform:uppercase;color:var(--tx-mid);}
+#ld-track{width:100px;height:1px;background:var(--edge);overflow:hidden;}
+#ld-fill{height:100%;width:0%;background:var(--acc);transition:width .3s ease;}
+#face-canvas{display:none;}
+</style>
+</head>
+<body>
+<div id="ld"><div id="ld-name">Echoo</div><div id="ld-msg">loading</div><div id="ld-track"><div id="ld-fill"></div></div></div>
+<canvas id="three-canvas"></canvas>
+<canvas id="face-canvas"></canvas>
+<header>
+  <div id="logo">Echoo</div><div class="hd"></div>
+  <div id="status"><div id="sdot"></div><span id="slbl">idle</span></div>
+</header>
+<div id="cam-pip"><div id="cam-lbl">camera</div><video id="cam-feed" autoplay playsinline muted></video></div>
+<div id="bar">
+  <div id="wv"><div class="wb"></div><div class="wb"></div><div class="wb"></div><div class="wb"></div><div class="wb"></div><div class="wb"></div><div class="wb"></div></div>
+  <div id="sub-inner"><div id="sub-who">echoo</div><div id="sub-txt"></div></div>
+</div>
+
+<div id="chat-box">
+  <input type="text" id="user-input" placeholder="Say something..." autocomplete="off">
+  <button id="send-btn">
+    <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+  </button>
+</div>
+
+<script type="importmap">
+{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.161.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.161.0/examples/jsm/","@pixiv/three-vrm":"https://cdn.jsdelivr.net/npm/@pixiv/three-vrm@2.1.0/lib/three-vrm.module.js"}}
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { VRMLoaderPlugin, VRMUtils } from '@pixiv/three-vrm';
+
+const sdot=document.getElementById('sdot'),slbl=document.getElementById('slbl');
+const bar=document.getElementById('bar'),subTxt=document.getElementById('sub-txt');
+const ldEl=document.getElementById('ld'),ldFill=document.getElementById('ld-fill'),ldMsg=document.getElementById('ld-msg');
+const camFeed=document.getElementById('cam-feed'),camLbl=document.getElementById('cam-lbl');
+const faceCanvas=document.getElementById('face-canvas');
+
+// renderer
+const canvas=document.getElementById('three-canvas');
+const renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:true});
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+renderer.outputColorSpace=THREE.SRGBColorSpace;
+renderer.setSize(innerWidth,innerHeight);
+window.addEventListener('resize',()=>{renderer.setSize(innerWidth,innerHeight);cam.aspect=innerWidth/innerHeight;cam.updateProjectionMatrix();});
+
+const scene=new THREE.Scene();
+const cam=new THREE.PerspectiveCamera(18,innerWidth/innerHeight,.1,100);
+cam.position.set(0,1.52,2.8);
+
+scene.add(new THREE.AmbientLight(0xfff8f0,1.1));
+const kl=new THREE.DirectionalLight(0xfff5e8,1.4);kl.position.set(1.5,2.5,3);scene.add(kl);
+const fl=new THREE.DirectionalLight(0xfff0e0,0.6);fl.position.set(-2,1,1);scene.add(fl);
+const rl=new THREE.DirectionalLight(0xffe8d8,0.4);rl.position.set(0,3,-2);scene.add(rl);
+
+const ctrl=new OrbitControls(cam,renderer.domElement);
+ctrl.enableDamping=true;ctrl.dampingFactor=.06;ctrl.target.set(0,1.45,0);
+ctrl.minDistance=1.5;ctrl.maxDistance=4;ctrl.minPolarAngle=Math.PI*.25;ctrl.maxPolarAngle=Math.PI*.55;ctrl.update();
+
+let vrm=null,poseReady=false,fc=0;
+const clock=new THREE.Clock();
+
+const BASE={
+  hips:{x:-0.01,z:0.00,y:0.00},spine:{x:0.04,z:0.00},chest:{x:-0.02,z:0.00},upperChest:{x:-0.01,z:0.00},
+  neck:{x:0.02,y:0.00},head:{x:-0.01,y:0.00},
+  leftShoulder:{z:0.06,x:0.02},rightShoulder:{z:-0.06,x:0.02},
+  leftUpperArm:{z:1.40,x:-0.15},rightUpperArm:{z:-1.40,x:-0.15},
+  leftLowerArm:{z:0.05,x:-0.05},rightLowerArm:{z:-0.05,x:-0.05},
+  leftHand:{z:0.05,x:0.00,y:0.00},rightHand:{z:-0.05,x:0.00,y:0.00},
+  leftUpperLeg:{z:-0.10,x:0.00,y:0.08},rightUpperLeg:{z:0.10,x:0.00,y:-0.08},
+  leftLowerLeg:{x:-0.08},rightLowerLeg:{x:-0.08},leftFoot:{x:0.05},rightFoot:{x:0.05},
+  leftToes:{x:0.00},rightToes:{x:0.00},
+  leftIndexProximal:{x:0.35,y:0.00,z:0.06},leftMiddleProximal:{x:0.35,y:0.00,z:0.00},
+  leftRingProximal:{x:0.35,y:0.00,z:-0.04},leftLittleProximal:{x:0.40,y:0.00,z:-0.08},
+  leftThumbProximal:{x:0.10,y:0.45,z:0.10},
+  rightIndexProximal:{x:0.35,y:0.00,z:-0.06},rightMiddleProximal:{x:0.35,y:0.00,z:0.00},
+  rightRingProximal:{x:0.35,y:0.00,z:0.04},rightLittleProximal:{x:0.40,y:0.00,z:0.08},
+  rightThumbProximal:{x:0.10,y:-0.45,z:-0.10},
+  leftIndexIntermediate:{x:0.30},leftMiddleIntermediate:{x:0.28},leftRingIntermediate:{x:0.30},leftLittleIntermediate:{x:0.32},
+  rightIndexIntermediate:{x:0.30},rightMiddleIntermediate:{x:0.28},rightRingIntermediate:{x:0.30},rightLittleIntermediate:{x:0.32},
+  leftIndexDistal:{x:0.20},leftMiddleDistal:{x:0.18},leftRingDistal:{x:0.20},leftLittleDistal:{x:0.22},leftThumbDistal:{x:0.20},
+  rightIndexDistal:{x:0.20},rightMiddleDistal:{x:0.18},rightRingDistal:{x:0.20},rightLittleDistal:{x:0.22},rightThumbDistal:{x:0.20},
+};
+const TALK={
+  spine:{x:0.03},chest:{x:0.02},head:{x:-0.02},
+  leftUpperArm:{z:-0.16,x:0.07},rightUpperArm:{z:0.12,x:0.06},
+  leftLowerArm:{z:-0.08},rightLowerArm:{z:0.06},
+  leftIndexProximal:{z:0.14},leftMiddleProximal:{z:0.12},
+  rightIndexProximal:{z:-0.14},rightMiddleProximal:{z:-0.12},
+};
+
+const LT={},LK=5.0;
+function st(n,a){LT[n]=Object.assign(LT[n]||{},a);}
+function applyLerp(dt){
+  if(!vrm?.humanoid)return;
+  const k=1-Math.exp(-LK*dt);
+  for(const[n,a]of Object.entries(LT)){
+    const b=vrm.humanoid.getNormalizedBoneNode(n);if(!b)continue;
+    if(a.x!==undefined)b.rotation.x+=(a.x-b.rotation.x)*k;
+    if(a.y!==undefined)b.rotation.y+=(a.y-b.rotation.y)*k;
+    if(a.z!==undefined)b.rotation.z+=(a.z-b.rotation.z)*k;
+  }
+}
+function setS(label, state) {
+  slbl.textContent = label;
+
+  sdot.classList.remove('on', 'talk');
+
+  if (state === 'on') {
+    sdot.classList.add('on');
+  } else if (state === 'talk') {
+    sdot.classList.add('talk');
+  }
+}
+function gb(n){return vrm?.humanoid?.getNormalizedBoneNode(n)??null;}
+function seedPose(){
+  if(!vrm?.humanoid)return;
+  for(const[n,a]of Object.entries(BASE)){
+    const b=gb(n);if(!b)continue;
+    for(const[k,v]of Object.entries(a))b.rotation[k]=v;
+    st(n,{...a});
+  }
+}
+
+//Expression system
+const EXPRS=['neutral','happy','angry','sad','Surprised','relaxed','blush','cute'];
+let curExpr='neutral',tgtExpr='neutral',exprBlend=1.0;
+const EXPR_SPD=2.0;
+
+function setExpression(name){
+  if(!EXPRS.includes(name))name='neutral';
+  if(tgtExpr===name)return;
+  tgtExpr=name; exprBlend=0;
+}
+
+function tickExpression(dt){
+  if(!vrm?.expressionManager)return;
+  if(curExpr===tgtExpr&&exprBlend>=1)return;
+  const k=1-Math.exp(-EXPR_SPD*dt);
+
+  if(curExpr!==tgtExpr){
+    // fade out current expression
+    if(curExpr!=='neutral'){
+      const cur=vrm.expressionManager.getValue(curExpr)??0;
+      const next=Math.max(0,cur-k*0.8);
+      vrm.expressionManager.setValue(curExpr,next);
+      if(next<0.02){
+        vrm.expressionManager.setValue(curExpr,0);
+        curExpr=tgtExpr; exprBlend=0;
+      }
+    }else{
+      curExpr=tgtExpr; exprBlend=0;
+    }
+  }else{
+    // fade in target expression
+    exprBlend=Math.min(1,exprBlend+k*0.6);
+    if(curExpr!=='neutral'){
+      // Priority Mapping for expressions
+      const maps = {
+        'happy': ['happy'],
+        'angry': ['angry'],
+        'sad': ['sad'],
+        'Surprised': ['surprised'],
+        'relaxed': ['relaxed'],
+        'cute': ['happy', 'relaxed'],
+        'blush': ['happy']
+      };
+      
+      const targets = maps[curExpr] || [curExpr];
+      targets.forEach(t => {
+        vrm.expressionManager.setValue(t, exprBlend);
+      });
+    }
+  }
+  vrm.expressionManager.update();
+}
+
+// Eye tracking
+let eyeX=0,eyeY=0,faceDetector=null,lastFaceT=0;
+async function initFaceDetect(){
+  if('FaceDetector' in window){
+    try{faceDetector=new FaceDetector({fastMode:true,maxDetectedFaces:1});return;}catch(e){}
+  }
+}
+async function detectFace(){
+  if(!camFeed.videoWidth)return;
+  const now=performance.now();
+  if(now-lastFaceT<80)return;
+  lastFaceT=now;
+  if(faceDetector){
+    try{
+      const faces=await faceDetector.detect(camFeed);
+      if(faces.length>0){
+        const f=faces[0].boundingBox;
+        eyeX=(1-(f.x+f.width*0.5)/camFeed.videoWidth-0.5)*0.6;
+        eyeY=((f.y+f.height*0.5)/camFeed.videoHeight-0.4)*0.4;
+      }
+    }catch(e){}
+  }else{
+    faceCanvas.width=40;faceCanvas.height=30;
+    const ctx=faceCanvas.getContext('2d');
+    ctx.save();ctx.scale(-1,1);ctx.drawImage(camFeed,-40,0,40,30);ctx.restore();
+    const d=ctx.getImageData(0,0,40,30).data;
+    let sx=0,sy=0,cnt=0;
+    for(let i=0;i<d.length;i+=4){
+      const r=d[i],g=d[i+1],b=d[i+2];
+      if(r>95&&g>40&&b>20&&r>g&&r>b&&r-g>15){sx+=(i/4)%40;sy+=Math.floor((i/4)/40);cnt++;}
+    }
+    if(cnt>20){eyeX=(sx/cnt/40-0.5)*0.5;eyeY=(sy/cnt/30-0.35)*0.35;}
+  }
+}
+function applyEyes(dt){
+  if(!vrm?.humanoid)return;
+  const k=1-Math.exp(-3.5*dt);
+  const lE=gb('leftEye'),rE=gb('rightEye'),hd=gb('head');
+  if(hd){hd.rotation.y+=(eyeX*0.18-hd.rotation.y)*k*0.3;}
+  if(lE){lE.rotation.y+=(eyeX-lE.rotation.y)*k;lE.rotation.x+=(eyeY-lE.rotation.x)*k;}
+  if(rE){rE.rotation.y+=(eyeX-rE.rotation.y)*k;rE.rotation.x+=(eyeY-rE.rotation.x)*k;}
+}
+
+// Bone Animation
+let talking=false;
+function tickAnim(t){
+  if(!vrm?.humanoid||!poseReady)return;
+  const breathe=Math.sin(t*1.55)*0.013+Math.sin(t*1.62)*0.004;
+  const sway=Math.sin(t*1.10);
+  const swayHip=sway*0.020,swaySpine=sway*0.011,swayChest=sway*0.006,swayNeck=sway*0.003;
+  const armSwing=-sway*0.013;
+  const headY=Math.sin(t*0.29)*0.007+Math.sin(t*0.51)*0.003;
+  const headX=Math.sin(t*0.24)*0.004+Math.sin(t*0.43)*0.002;
+  const fi1=Math.sin(t*0.17)*0.010+Math.sin(t*0.38)*0.004;
+  const fi2=Math.sin(t*0.21)*0.010+Math.sin(t*0.34)*0.004;
+  const fi3=Math.sin(t*0.15)*0.010+Math.sin(t*0.41)*0.004;
+  const fi4=Math.sin(t*0.19)*0.010+Math.sin(t*0.36)*0.004;
+  const th=Math.sin(t*0.13)*0.013+Math.sin(t*0.30)*0.005;
+  if(talking){
+    const tb=Math.sin(t*3.9)*0.013+Math.sin(t*6.5)*0.005;
+    const ts=Math.sin(t*2.0)*0.009+Math.sin(t*3.4)*0.004;
+    const as=Math.sin(t*2.7)*0.021+Math.sin(t*4.5)*0.008;
+    const fg=Math.sin(t*3.1)*0.018+Math.sin(t*5.0)*0.007;
+    const fO=Math.max(0,as);
+    st('hips',{x:BASE.hips.x,z:swayHip*0.5,y:BASE.hips.y});
+    st('spine',{x:BASE.spine.x+TALK.spine.x+breathe,z:swaySpine*0.4});
+    st('chest',{x:BASE.chest.x+TALK.chest.x,z:swayChest*0.3});
+    st('neck',{y:headY*0.4+ts*0.4,x:BASE.neck.x});
+    st('head',{x:TALK.head.x+tb,y:headY*0.5+ts});
+    st('leftUpperArm',{z:BASE.leftUpperArm.z+TALK.leftUpperArm.z+as*0.5,x:BASE.leftUpperArm.x+TALK.leftUpperArm.x});
+    st('rightUpperArm',{z:BASE.rightUpperArm.z+TALK.rightUpperArm.z-as*0.4,x:BASE.rightUpperArm.x+TALK.leftUpperArm.x});
+    st('leftLowerArm',{z:BASE.leftLowerArm.z+TALK.leftLowerArm.z+as*0.22});
+    st('rightLowerArm',{z:BASE.rightLowerArm.z+TALK.rightLowerArm.z-as*0.18});
+    st('leftHand',{z:BASE.leftHand.z+as*0.08,x:BASE.leftHand.x,y:BASE.leftHand.y});
+    st('rightHand',{z:BASE.rightHand.z-as*0.07,x:BASE.rightHand.x,y:BASE.rightHand.y});
+    st('leftIndexProximal',{z:BASE.leftIndexProximal.z+TALK.leftIndexProximal.z+fg*0.3,x:BASE.leftIndexProximal.x});
+    st('leftMiddleProximal',{z:BASE.leftMiddleProximal.z+TALK.leftMiddleProximal.z+fg*0.25,x:BASE.leftMiddleProximal.x});
+    st('leftRingProximal',{z:BASE.leftRingProximal.z-fO*0.10,x:BASE.leftRingProximal.x});
+    st('leftLittleProximal',{z:BASE.leftLittleProximal.z-fO*0.12,x:BASE.leftLittleProximal.x});
+    st('leftThumbProximal',{z:BASE.leftThumbProximal.z+fg*0.08,y:BASE.leftThumbProximal.y});
+    st('rightIndexProximal',{z:BASE.rightIndexProximal.z+TALK.rightIndexProximal.z-fg*0.3,x:BASE.rightIndexProximal.x});
+    st('rightMiddleProximal',{z:BASE.rightMiddleProximal.z+TALK.rightMiddleProximal.z-fg*0.25,x:BASE.rightMiddleProximal.x});
+    st('rightRingProximal',{z:BASE.rightRingProximal.z+fO*0.10,x:BASE.rightRingProximal.x});
+    st('rightLittleProximal',{z:BASE.rightLittleProximal.z+fO*0.12,x:BASE.rightLittleProximal.x});
+    st('rightThumbProximal',{z:BASE.rightThumbProximal.z-fg*0.08,y:BASE.rightThumbProximal.y});
+    st('leftUpperLeg',{z:BASE.leftUpperLeg.z,x:BASE.leftUpperLeg.x,y:BASE.leftUpperLeg.y});
+    st('rightUpperLeg',{z:BASE.rightUpperLeg.z,x:BASE.rightUpperLeg.x,y:BASE.rightUpperLeg.y});
+    st('leftLowerLeg',{x:BASE.leftLowerLeg.x});st('rightLowerLeg',{x:BASE.rightLowerLeg.x});
+    st('leftFoot',{x:BASE.leftFoot.x});st('rightFoot',{x:BASE.rightFoot.x});
+    st('leftToes',{x:BASE.leftToes.x});st('rightToes',{x:BASE.rightToes.x});
+  }else{
+    st('hips',{x:BASE.hips.x,z:swayHip,y:BASE.hips.y});
+    st('spine',{x:BASE.spine.x+breathe,z:swaySpine});
+    st('chest',{x:BASE.chest.x-breathe*0.3,z:swayChest});
+    st('neck',{y:swayNeck+headY,x:BASE.neck.x+headX*0.3});
+    st('head',{x:headX,y:swayNeck*0.6+headY});
+    st('leftUpperArm',{z:BASE.leftUpperArm.z+armSwing,x:BASE.leftUpperArm.x});
+    st('rightUpperArm',{z:BASE.rightUpperArm.z-armSwing,x:BASE.rightUpperArm.x});
+    st('leftLowerArm',{z:BASE.leftLowerArm.z+armSwing*0.4});
+    st('rightLowerArm',{z:BASE.rightLowerArm.z-armSwing*0.4});
+    st('leftHand',{z:BASE.leftHand.z+armSwing*0.25,x:BASE.leftHand.x,y:BASE.leftHand.y});
+    st('rightHand',{z:BASE.rightHand.z-armSwing*0.25,x:BASE.rightHand.x,y:BASE.rightHand.y});
+    st('leftIndexProximal',{z:BASE.leftIndexProximal.z+fi1,x:BASE.leftIndexProximal.x});
+    st('leftMiddleProximal',{z:BASE.leftMiddleProximal.z+fi2,x:BASE.leftMiddleProximal.x});
+    st('leftRingProximal',{z:BASE.leftRingProximal.z+fi3,x:BASE.leftRingProximal.x});
+    st('leftLittleProximal',{z:BASE.leftLittleProximal.z+fi4,x:BASE.leftLittleProximal.x});
+    st('leftThumbProximal',{z:BASE.leftThumbProximal.z+th,y:BASE.leftThumbProximal.y});
+    st('rightIndexProximal',{z:BASE.rightIndexProximal.z-fi1,x:BASE.rightIndexProximal.x});
+    st('rightMiddleProximal',{z:BASE.rightMiddleProximal.z-fi2,x:BASE.rightMiddleProximal.x});
+    st('rightRingProximal',{z:BASE.rightRingProximal.z-fi3,x:BASE.rightRingProximal.x});
+    st('rightLittleProximal',{z:BASE.rightLittleProximal.z-fi4,x:BASE.rightLittleProximal.x});
+    st('rightThumbProximal',{z:BASE.rightThumbProximal.z-th,y:BASE.rightThumbProximal.y});
+    st('leftIndexIntermediate',{x:BASE.leftIndexIntermediate.x});st('leftMiddleIntermediate',{x:BASE.leftMiddleIntermediate.x});
+    st('leftRingIntermediate',{x:BASE.leftRingIntermediate.x});st('leftLittleIntermediate',{x:BASE.leftLittleIntermediate.x});
+    st('rightIndexIntermediate',{x:BASE.rightIndexIntermediate.x});st('rightMiddleIntermediate',{x:BASE.rightMiddleIntermediate.x});
+    st('rightRingIntermediate',{x:BASE.rightRingIntermediate.x});st('rightLittleIntermediate',{x:BASE.rightLittleIntermediate.x});
+    st('leftIndexDistal',{x:BASE.leftIndexDistal.x});st('leftMiddleDistal',{x:BASE.leftMiddleDistal.x});
+    st('leftRingDistal',{x:BASE.leftRingDistal.x});st('leftLittleDistal',{x:BASE.leftLittleDistal.x});
+    st('leftThumbDistal',{x:BASE.leftThumbDistal.x});
+    st('rightIndexDistal',{x:BASE.rightIndexDistal.x});st('rightMiddleDistal',{x:BASE.rightMiddleDistal.x});
+    st('rightRingDistal',{x:BASE.rightRingDistal.x});st('rightLittleDistal',{x:BASE.rightLittleDistal.x});
+    st('rightThumbDistal',{x:BASE.rightThumbDistal.x});
+    st('leftUpperLeg',{z:BASE.leftUpperLeg.z,x:BASE.leftUpperLeg.x,y:BASE.leftUpperLeg.y});
+    st('rightUpperLeg',{z:BASE.rightUpperLeg.z,x:BASE.rightUpperLeg.x,y:BASE.rightUpperLeg.y});
+    st('leftLowerLeg',{x:BASE.leftLowerLeg.x});st('rightLowerLeg',{x:BASE.rightLowerLeg.x});
+    st('leftFoot',{x:BASE.leftFoot.x});st('rightFoot',{x:BASE.rightFoot.x});
+    st('leftToes',{x:BASE.leftToes.x});st('rightToes',{x:BASE.rightToes.x});
+  }
+}
+
+// Blink
+let bPh='open',bT=0,bV=0;
+function schedBlink(){setTimeout(()=>{bPh='closing';bT=0;if(Math.random()<.2)setTimeout(()=>{bPh='closing';bT=0;},300);schedBlink();},2500+Math.random()*3500);}
+function tickBlink(dt){
+  if(!vrm?.expressionManager||bPh==='open')return;
+  bT+=dt;
+  if(bPh==='closing'){bV=Math.min(1,bT/.07);if(bV>=1){bPh='opening';bT=0;}}
+  else{bV=1-Math.min(1,bT/.10);if(bV<=0){bV=0;bPh='open';}}
+  vrm.expressionManager.setValue('blink',bV);
+}
+
+// Lip Sync
+const MORPHS=['aa','ee','ih','oh','ou'];
+const VMAP={a:'aa',e:'ee',i:'ih',o:'oh',u:'ou',b:'aa',m:'aa',p:'aa',f:'ee',v:'ee',s:'ih',z:'ih',r:'oh',l:'ih',k:'aa',g:'aa',n:'ih',d:'ih',t:'ih'};
+let lipTimeline=[],lipStart=0,lipDur=0,lipActive=false,lipMorph='',lipVal=0;
+function buildTimeline(text,durMs){
+  const ph=[];for(const c of text.toLowerCase()){const m=VMAP[c];if(m)ph.push(m);}
+  if(!ph.length)ph.push('aa','oh','ih','aa');
+  const slot=durMs/ph.length;
+  return ph.map((morph,i)=>({morph,intensity:Math.min(0.40+Math.sin(i*1.3)*0.22+(Math.random()-.5)*0.10,0.88),start:i*slot,end:(i+1)*slot}));
+}
+function setMorph(name,val){if(!vrm?.expressionManager)return;for(const m of MORPHS)vrm.expressionManager.setValue(m,m===name?val:0);vrm.expressionManager.update();}
+function clearMorphs(){if(!vrm?.expressionManager)return;for(const m of MORPHS)vrm.expressionManager.setValue(m,0);vrm.expressionManager.update();}
+function startLip(text,durMs){stopLip();lipTimeline=buildTimeline(text,durMs);lipStart=clock.elapsedTime*1000;lipDur=durMs;lipActive=true;lipMorph='';lipVal=0;}
+function stopLip(){lipActive=false;lipTimeline=[];lipMorph='';lipVal=0;clearMorphs();}
+function tickLip(dt){
+  if(!lipActive||!vrm?.expressionManager)return;
+  const now=clock.elapsedTime*1000-lipStart;
+  if(now>=lipDur){stopLip();return;}
+  let active=null;
+  for(const s of lipTimeline){if(now>=s.start&&now<s.end){active=s;break;}}
+  let tM=active?active.morph:'',tV=0;
+  if(active){const p=(now-active.start)/(active.end-active.start);tV=active.intensity*Math.sin(p*Math.PI);}
+  const k=1-Math.exp(-18*dt);
+  if(tM!==lipMorph){lipVal*=(1-k*2);if(lipVal<0.02){lipMorph=tM;lipVal=0;}}
+  else{lipVal+=(tV-lipVal)*k;}
+  if(lipMorph)setMorph(lipMorph,Math.max(0,lipVal));
+  else clearMorphs();
+}
+
+// Render Loop
+function loop(){
+  requestAnimationFrame(loop);
+  const dt=clock.getDelta(),t=clock.elapsedTime;
+  ctrl.update();detectFace();
+  if(vrm){
+    if(!poseReady){if(++fc>=10){seedPose();poseReady=true;schedBlink();}}
+    else{tickAnim(t);applyLerp(dt);tickBlink(dt);tickLip(dt);applyEyes(dt);tickExpression(dt);}
+    vrm.update(dt);
+  }
+  renderer.render(scene,cam);
+}
+loop();
+
+// VRM Loader
+const vrmURL='/ECHOOi.vrm';
+const loader=new GLTFLoader();loader.register(p=>new VRMLoaderPlugin(p));
+loader.load(vrmURL,
+  gltf=>{
+    const v=gltf.userData.vrm;if(!v){ldMsg.textContent='no VRM';return;}
+    VRMUtils.removeUnnecessaryJoints(gltf.scene);
+    vrm=v;vrm.scene.rotation.y=Math.PI;scene.add(vrm.scene);window.__vrm=vrm;
+    ldFill.style.width='100%';ldMsg.textContent='ready';
+    setTimeout(()=>{ldEl.classList.add('fade');setTimeout(()=>ldEl.remove(),900);},400);
+    setS('listening','on');startCam();
+    fetch('/get_text',{cache:'no-store'}).then(r=>r.json()).then(d=>{lastId=d.id;lastTx=d.text||'';}).catch(()=>{});
+  },
+  p=>{const pct=p.total>0?Math.round(p.loaded/p.total*100):0;ldFill.style.width=pct+'%';ldMsg.textContent='loading '+pct+'%';},
+  e=>{console.error(e);ldMsg.textContent='error — check console';}
+);
+
+// Camera system
+let camStream=null;
+
+async function startCam(){
+  try{
+    camStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'user',width:{ideal:640},height:{ideal:480}},audio:false});
+    camFeed.srcObject=camStream;camLbl.textContent='live';camLbl.style.color='#5a9e7a';
+    await initFaceDetect();
+  }catch(e){camLbl.textContent=e.name==='NotAllowedError'?'allow camera':'unavailable';camLbl.style.color='#c4607a';}
+}
+
+// UI 
+let subTmr=null;
+function showSub(tx,durMs){
+  subTxt.textContent=tx;bar.classList.add('show');
+  if(subTmr)clearTimeout(subTmr);
+  const hideAfter=durMs>0?durMs+600:Math.max(3500,tx.trim().split(/\s+/).length*420+2000);
+  subTmr=setTimeout(()=>bar.classList.remove('show'),hideAfter);
+}
+
+let isBusy=false;
+function playResponse(tx,durMs,expr){
+  if(!tx?.trim())return;
+  if(isBusy){showSub(tx,durMs);return;}
+  isBusy=true;
+  const dur=durMs>0?durMs:Math.max(1800,Math.round(tx.trim().split(/\s+/).length/140*60000));
+  // set expression
+  setExpression(expr||'neutral');
+  showSub(tx,dur);
+  setS('speaking','talk');bar.classList.add('talking');
+  talking=true;startLip(tx,dur);
+  setTimeout(()=>{
+    stopLip();talking=false;isBusy=false;
+    setS('listening','on');bar.classList.remove('talking');
+    // return to neutral after speaking
+    setExpression('neutral');
+  },dur);
+}
+
+// Poll for new text every 300ms
+let lastId=-1,lastTx='';
+async function poll(){
+  try{
+    const d=await(await fetch('/get_text',{cache:'no-store'})).json();
+    if(d.id!==lastId&&d.text?.trim()&&d.text!==lastTx){
+      lastId=d.id;lastTx=d.text;
+      playResponse(d.text,d.duration_ms||0,d.expression||'neutral');
+    }
+  }catch(_){}
+}
+setInterval(poll,300);
+
+// Text input logic
+const uiInput = document.getElementById('user-input');
+const uiBtn = document.getElementById('send-btn');
+
+async function sendUserText() {
+  const text = uiInput.value.trim();
+  if (!text) return;          // only block if input is actually empty
+  
+  uiInput.value = '';
+  
+  // Flash the send button briefly so the user knows it was received
+  uiBtn.style.transform = 'scale(0.88)';
+  setTimeout(() => uiBtn.style.transform = '', 150);
+  
+  try {
+    await fetch('/send_text', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text })
+    });
+  } catch (e) {
+    console.error('Failed to send text:', e);
+  } finally {
+    uiInput.focus();
+  }
+}
+
+uiBtn.onclick = sendUserText;
+uiInput.onkeydown = (e) => { if (e.key === 'Enter') sendUserText(); };
+</script>
+</body>
+</html>
