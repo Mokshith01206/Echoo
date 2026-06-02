@@ -1,28 +1,28 @@
-# Echoo 🌸 — Sweet AI Desktop Companion
+# Echoo - Sweet AI Desktop Companion
 
 Echoo is a sweet, caring, and emotionally supportive AI desktop companion that can also automate tasks on your Windows PC. Featuring a web interface with a 3D VRM model, speech recognition (STT), custom voice synthesis (TTS), and system-level task execution.
 
 ---
 
-## ✨ Features
+## Features
 
-- **🌸 Sweet & Caring Persona:** Echoo acts as a lovely, supportive companion who is always encouraging, empathetic, and ready to listen.
-- **🎙️ Speech & Voice Interaction:**
+- **Sweet & Caring Persona:** Echoo acts as a lovely, supportive companion who is always encouraging, empathetic, and ready to listen.
+- **Speech & Voice Interaction:**
   - **Speech-to-Text (STT):** Speak directly to Echoo using your microphone.
   - **Custom TTS (GPT-SoVITS):** Ultra-realistic, expressive voice synthesis driven by a locally-hosted GPT-SoVITS API.
-- **🖥️ PC Automation & Control:**
+- **PC Automation & Control:**
   - **Open & Close Apps:** Instantly control Chrome, Spotify, Notepad, Paint, Calculator, VLC, VS Code, and MS Office applications (Word, Excel, PowerPoint).
   - **Typing & Keyboard Hotkeys:** Type text into active windows and trigger system hotkeys (e.g., `Ctrl+C`, `Ctrl+V`, `Alt+F4`, etc.).
   - **Media & Volume:** Adjust system volume (up, down, mute).
   - **Browser Actions & Web Search:** Search the web or play YouTube videos automatically.
   - **Linways Auto-Evaluation:** Automatically fills out and submits Linways evaluation forms via browser DevTools automation.
-- **🌟 Web Interface:**
+- **Web Interface:**
   - Interactive web dashboard (`web.html`) with a custom 3D avatar (`ECHOOi.vrm`).
   - Supports animations, user input logging, and multiple quick interactions.
 
 ---
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 - **Backend:** Python, Flask, Flask-CORS
 - **AI Brain:** Groq API (`llama-3.3-70b-versatile`)
@@ -34,7 +34,7 @@ Echoo is a sweet, caring, and emotionally supportive AI desktop companion that c
 
 ---
 
-## 🚀 Setup & Installation
+## Setup & Installation
 
 ### 1. Prerequisites
 - **Python 3.10+** (ensure it's added to your system PATH)
@@ -64,7 +64,7 @@ GPT_SOVITS_URL=http://127.0.0.1:9880
 
 ---
 
-## 🎙️ Voice & TTS Setup
+## Voice & TTS Setup
 
 1. Make sure your local **GPT-SoVITS** server is available.
 2. In the setup files, update the paths in `start_echoo.bat` and `start_voice_api.bat` to point to your local GPT-SoVITS install directory:
@@ -75,7 +75,7 @@ GPT_SOVITS_URL=http://127.0.0.1:9880
 
 ---
 
-## 🎮 How to Run
+## How to Run
 
 You can start the entire stack using the launcher scripts:
 
