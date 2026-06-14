@@ -58,7 +58,7 @@ try:
             print(f"  -> Warning: Model loading request failed: {e}")
             
 except Exception:
-    print(f"[TTS] \u2717 GPT-SoVITS not reachable at {GPT_SOVITS_URL}")
+    print(f"[TTS] [X] GPT-SoVITS not reachable at {GPT_SOVITS_URL}")
     print(f"[TTS]   Start GPT-SoVITS API first, then restart Echoo.")
 
 latest_response = {
@@ -165,7 +165,7 @@ try:
     pyautogui.PAUSE    = 0.05
 except ImportError:
     PYAUTOGUI = False
-    print("[Warning] pyautogui not installed \u2014 type/hotkey actions disabled")
+    print("[Warning] pyautogui not installed - type/hotkey actions disabled")
 
 
 # App paths
@@ -338,20 +338,20 @@ def linways_agree_all():
             win32gui.SetForegroundWindow(target[0])
             time.sleep(0.8)
         else:
-            print("[Linways] No Brave/Linways window found — proceeding anyway")
+            print("[Linways] No Brave/Linways window found - proceeding anyway")
             time.sleep(0.3)
     except ImportError:
         print("[Linways] win32gui not available, using Alt+Tab fallback")
         pyautogui.hotkey('alt', 'tab')
         time.sleep(0.8)
 
-    # ── Step 2: Open DevTools Console ───────────────────────────────────────
+    # Step 2: Open DevTools Console
     # Ctrl+Shift+J opens the Console panel directly in Brave/Chrome
     print("[Linways] Opening DevTools console...")
     pyautogui.hotkey('ctrl', 'shift', 'j')
     time.sleep(1.8)   # wait for DevTools to open and console to be ready
 
-    # ── Step 3: Click the console input area to make sure it's focused ──────
+    # Step 3: Click the console input area to make sure it's focused
     # Move to the bottom-right area of the screen where the console input lives
     try:
         w, h = pyautogui.size()
@@ -364,7 +364,7 @@ def linways_agree_all():
     except Exception:
         pass
 
-    # ── Step 4: Bypass Brave's Self-XSS protection ───────────────────────────
+    # Step 4: Bypass Brave's Self-XSS protection
     # Brave shows a warning: "Don't paste code... type 'allow pasting' to enable"
     # We MUST type it (not paste it) then press Enter BEFORE we can paste JS.
     print("[Linways] Typing 'allow pasting' to bypass Self-XSS protection...")
@@ -373,29 +373,29 @@ def linways_agree_all():
     pyautogui.press('enter')
     time.sleep(0.8)   # wait for the warning to clear and paste to be unlocked
 
-    # ── Step 5: Click console input again to re-focus ────────────────────────
+    # Step 5: Click console input again to re-focus
     try:
         pyautogui.click(console_x, console_y)
         time.sleep(0.3)
     except Exception:
         pass
 
-    # ── Step 6: Paste and run the JS ─────────────────────────────────────────
+    # Step 6: Paste and run the JS
     pyautogui.hotkey('ctrl', 'a')
     time.sleep(0.15)
     pyperclip.copy(JS)
     pyautogui.hotkey('ctrl', 'v')
     time.sleep(0.4)
 
-    # ── Step 7: Execute ───────────────────────────────────────────────────────
+    # Step 7: Execute
     pyautogui.press('enter')
     time.sleep(1.0)
     print("[Linways] JS executed in console.")
 
-    # ── Step 8: Close DevTools ────────────────────────────────────────────────
+    # Step 8: Close DevTools
     pyautogui.hotkey('ctrl', 'shift', 'j')
     time.sleep(0.4)
-    print("[Linways] Done — all agree/select buttons clicked.")
+    print("[Linways] Done - all agree/select buttons clicked.")
     return True
 
 
@@ -751,7 +751,7 @@ def _play_response(text, expr, lang, action):
             return
 
         if audio is None:
-            print("[TTS] No audio \u2014 publishing text only")
+            print("[TTS] No audio - publishing text only")
             estimated_ms = max(2000, len(text.split()) * 450)
             with state_lock:
                 latest_response["text"]        = text
